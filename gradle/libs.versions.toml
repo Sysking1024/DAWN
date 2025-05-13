@@ -9,6 +9,11 @@ lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.1"
 composeBom = "2024.09.00"
 search = "9.7.1"
+lifecycleViewmodelCompose = "2.9.0"
+lifecycleViewmodelKtx = "2.9.0"
+navi = "1.9.4"
+location = "6.4.9"
+xdmapLocationSearch = "10.1.201_loc6.4.9_sea9.7.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -26,6 +31,11 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 search = { group = "com.amap.api", name = "search", version.ref = "search" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
+androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
+navi = { group = "com.amap.api", name = "navi", version.ref = "navi" }
+location = { group = "com.amap.api", name = "location", version.ref = "location" }
+xdmap-location-search = { group = "com.amap.api", name = "3dmap-location-search", version.ref = "xdmapLocationSearch" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

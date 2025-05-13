@@ -27,10 +27,10 @@ class PoiSearchViewModel(application: Application) : AndroidViewModel(applicatio
             return
         }
 
-        Log.d("PoiSearchViewModel", "searchPoi called with keyword: $keyWord, city: $cityCode")
+        Log.d("PoiSearchViewModel", "搜索POI关键字是：$keyWord, 搜索城市是：$cityCode")
 
         isLoadingState.value = true
-        errorMessageState = null
+        errorMessageState.value = null
         poiListState.clear()
         suggestionCitiesState.clear()
         currentPage = 0
@@ -41,53 +41,57 @@ class PoiSearchViewModel(application: Application) : AndroidViewModel(applicatio
             query.pageNum = currentPage
 
             poiSearch = PoiSearch(getApplication(), query)
-            poiSearch.setOnPoiSearchListener(this)
+            poiSearch?.setOnPoiSearchListener(this)
 
             poiSearch?.searchPOIAsyn()
-            Log.d("PoiSearchViewModel", "searchPOIAsyn called")
+            Log.d("PoiSearchViewModel", "搜索POI开始异步执行")
         } catch (e: AMapException) {
-            Log.e("PoiSearchViewModel", "AMapException during search setup: ${e.errorMessage}")
+            Log.e("PoiSearchViewModel", "搜索发起失败：${e.errorMessage}")
             errorMessageState.value = "搜索发起失败: ${e.errorMessage}"
             isLoadingState.value = false // 发生异常，结束加载状态
         } catch (e: Exception) {
-            Log.e("PoiSearchViewModel", "Exception during search setup: ${e.message}", e)
+            Log.e("PoiSearchViewModel", "搜索发起时发生未知错误：${e.message}", e)
             errorMessageState.value = "搜索发起时发生未知错误"
             isLoadingState.value = false // 发生异常，结束加载状态
         }
     }
 
     override fun onPoiSearched(result: PoiResult?, rCode: Int) {
-        Log.d("PoiSearchViewModel", "onPoiSearched callback received. rCode: $rCode, Result: ${result?.toString()}")
+        Log.d("PoiSearchViewModel", "onPoiSearched回调执行rCode：$rCode, Result：${result?.toString()}")
         isLoadingState.value = false // 无论成功与否，加载状态都应结束
 
         if (rCode == AMapException.CODE_AMAP_SUCCESS) {
             if (result?.pois != null && result.pois.isNotEmpty()) {
                 poiListState.addAll(result.pois)
-                Log.d("PoiSearchViewModel", "POIs found: ${result.pois.size}")
+                Log.d("PoiSearchViewModel", "搜索到结果：${result.pois.size}")
             } else {
-                if (result?.searchSuggestionCitys != null && result.searchSuggestionCitys.isNotEmpty()) {
-                    val suggestedCities = result.searchSuggestionCitys.mapNotNull { it.cityName }
+                val suggestedCitiesList = result?.searchSuggestionCitys
+                if (suggestedCitiesList != null && suggestedCitiesList.isNotEmpty()) {
+                    val suggestedCities = suggestedCitiesList.mapNotNull { it.cityName }
                     suggestionCitiesState.addAll(suggestedCities)
                     errorMessageState.value = "当前城市未找到结果，请尝试建议城市: ${suggestedCities.joinToString()}"
 
-                    Log.d("PoiSearchViewModel", "No POIs found, but suggestion cities are available: $suggestedCities")
-                } else if (result?.searchSuggestionKeywords != null && result?.searchSuggestionKeywords.isNotEmpty()) {
-                    errorMessageState.value = "未找到相关结果，建议关键词: ${result.searchSuggestionKeywords.joinToString()}"
-                    Log.d("PoiSearchViewModel", "No POIs found, but suggestion keywords are available: ${result.searchSuggestionKeywords.joinToString()}")
+                    Log.d("PoiSearchViewModel", "当前城市未找到结果，但有建议城市：$suggestedCities")
                 } else {
-                    errorMessageState.value = "未找到相关POI信息"
-                    Log.d("PoiSearchViewModel", "No POIs found and no suggestions.")
+                    val suggestionKeywordsList = result?.searchSuggestionKeywords
+                    if (suggestionKeywordsList != null && suggestionKeywordsList.isNotEmpty()) {
+                        errorMessageState.value = "未找到相关结果，建议关键词: ${suggestionKeywordsList.joinToString()}"
+                        Log.d("PoiSearchViewModel", "未找到相关结果，建议关键词：${suggestionKeywordsList.joinToString()}")
+                    } else {
+                        errorMessageState.value = "未找到相关POI信息"
+                        Log.d("PoiSearchViewModel", "未找到相关POI信息")
+                    }
                 }
                 }
         } else {
             errorMessageState.value = "搜索失败，错误码: $rCode"
-            Log.e("PoiSearchViewModel", "Search failed. rCode: $rCode, ErrorInfo: ${result?.toString()} (Check AMap error codes)")
+            Log.e("PoiSearchViewModel", "搜索失败，错误码：$rCode")
         }
     }
 
-    override fun onPoiItemSearched(p0: PoiItem?, p1: Int) {
+    override fun onPoiItemSearched(rPoiItem: PoiItem?, rCode: Int) {
         // 对于关键字搜索，此方法通常不会被调用。
-        // 如果你后续要实现通过POI ID精确搜索单个POI的功能，则会在这里处理结果。
+// 如果你后续要实现通过POI ID精确搜索单个POI的功能，则会在这里处理结果。
         // 例如:
         // isLoadingState.value = false
         // if (rCode == AMapException.CODE_AMAP_SUCCESS) {

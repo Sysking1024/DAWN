@@ -3,7 +3,7 @@ package world.accera.dawn
 import android.app.Application
 import com.amap.api.services.core.ServiceSettings
 
-class MainApplication : Application {
+class MainApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 

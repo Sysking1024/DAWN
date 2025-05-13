@@ -1,32 +1,39 @@
 package world.accera.dawn
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.viewModelFactory
 import world.accera.dawn.ui.theme.DAWNTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val requestMultiplePermissionsLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            var allGranted = true
+            permissions.entries.forEach {
+                if (!it.value) {
+                    allGranted = false
+                    Log.w("Permissions", "Permission denied: ${it.key}")
+                }
+            }
+
+            if (allGranted) {
+                Log.d("Permissions", "All requested permissions granted.")
+                // 可以在这里触发一次定位，如果ViewModel中因为权限不足而未能启动
+                // viewModel.startLocation() // 如果你有一个viewModel实例在这里
+            } else {
+                Log.e("Permissions", "Some permissions were denied.")
+                // 用户拒绝了部分或全部权限，提示用户或引导用户去设置开启
+                // Toast.makeText(this, "需要定位权限才能使用此功能", Toast.LENGTH_SHORT).show()
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -36,59 +43,13 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    PoiSearchScreen()
+                    //PoiSearchScreen()
+                    LocationScreen { permissionsArray ->
+                        requestMultiplePermissionsLauncher.launch(permissionsArray)
+                    }
                 }
             }
         }
     }
 }
 
-@Composable
-fun PoiSearchScreen(
-    poiViewModel: PoiSearchViewModel = viewModel()
-) {
-    var keywordInput by remember { mutableStateOf("肯德基") }
-    var cityInput by remember { mutableStateOf("北京") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        Text(
-            text = "高德POI搜索",
-            style = MaterialTheme.typography.headlineMedium, // 使用 Material Design 的标题样式
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        OutlinedTextField(
-            value = keywordInput,
-            onValueChange = { keywordInput = it },
-                    label = { Text("输入搜索关键字") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = cityInput,
-            onValueChange = { cityInput = it },
-            label = { Text("输入城市 (可留空)") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                poiViewModel.searchPoi(keywordInput, cityInput)
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) { Text("搜索POI") }
-
-        // TODO: 在接下来的步骤中，我们将在这里添加加载指示器、错误信息和结果显示区域。
-    }
-}
