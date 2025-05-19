@@ -14,6 +14,9 @@ lifecycleViewmodelKtx = "2.9.0"
 navi = "1.9.4"
 location = "6.4.9"
 xdmapLocationSearch = "10.1.201_loc6.4.9_sea9.7.4"
+navigationCompose = "2.9.0"
+naviXdmap = "10.0.800_3dmap10.0.800"
+naviXdmapLocationSearch = "10.1.201_3dmap10.1.201_loc6.4.9_sea9.7.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -36,6 +39,9 @@ androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifec
 navi = { group = "com.amap.api", name = "navi", version.ref = "navi" }
 location = { group = "com.amap.api", name = "location", version.ref = "location" }
 xdmap-location-search = { group = "com.amap.api", name = "3dmap-location-search", version.ref = "xdmapLocationSearch" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+navi-xdmap = { group = "com.amap.api", name = "navi-3dmap", version.ref = "naviXdmap" }
+navi-xdmap-location-search = { group = "com.amap.api", name = "navi-3dmap-location-search", version.ref = "naviXdmapLocationSearch" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
