@@ -26,6 +26,7 @@ const val PoiSearchRoute = "poi_search_screen"
 const val PoiDetailRoute = "poi_detail_screen" // 详情页的基础路由
 const val RoutePlanRoute = "route_plan_screen" // 出行方案页基础路由
 const val NavigationRoute = "navigation_screen"
+const val CameraRecognitionRoute = "camera_recognition_screen"
 
 // 参数名常量 - 先定义所有参数名常量
 const val PoiIdNavArg = "poiId" // 用于传递 POI ID 的导航参数名称
@@ -38,7 +39,6 @@ const val RoutePlanOriginLonArg = "rpOriginLon" // 出行方案起点纬度参�
 const val RoutePlanDestLatArg = "rpDestLat" // 出行方案终点经度参数名
 const val RoutePlanDestLonArg = "rpDestLon" // 出行方案终点纬度参数名
 const val RoutePlanDestNameArg = "rpDestName" // 出行方案终点名称参数名
-
 
 // 带参数的路由 - 后定义，使用上面定义的参数名常量
 // POI 详情页带参数路由
@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
                     // *** 创建 NavController ***
                     val navController = rememberNavController()
 
-                    // 获取 LocationViewModel 和 PoiSearchViewModel 实例
+                    // 获取 ViewModel 实例
                     // ViewModel 会在 NavHost 的生命周期内被正确管理
                     val locationViewModel: LocationViewModel = viewModel()
                     val poiSearchViewModel: PoiSearchViewModel = viewModel()
@@ -281,7 +281,19 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        composable(NavigationRoute) { NavigationScreen(routePlanViewModel) }
+                        // *** 导航界面 ***
+                        composable(NavigationRoute) {
+                            NavigationScreen(
+                                routePlanViewModel = routePlanViewModel,
+                                onEndNaviTask = {
+                                    routePlanViewModel.onCameraDialogDismissed() // 先隐藏对话框
+                                    navController.navigate(CameraRecognitionRoute)
+                                }
+                            )
+                        }
+
+                        // ***识别界面 ***
+                        composable(CameraRecognitionRoute) { CameraRecognitionScreen(routePlanViewModel = routePlanViewModel) }
                     }
                 }
             }

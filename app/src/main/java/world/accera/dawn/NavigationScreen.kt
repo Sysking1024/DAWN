@@ -2,8 +2,12 @@ package world.accera.dawn
 
 import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,12 +24,16 @@ fun NavigationScreen(
     routePlanViewModel: RoutePlanViewModel = viewModel(),
     // TODO: 如果需要返回按钮，添加 onBackClick 回调
     // onBackClick: () -> Unit = {}
+    onEndNaviTask: () -> Unit = {}
 ) {
     val context = LocalContext.current
     //val lifecycle = rememberLifecycleEvent() // 监听 Compose 生命周期事件
 
     // 使用 remember 存储 AMapNaviView 实例
     var aMapNaviView by remember { mutableStateOf<AMapNaviView?>(null) }
+
+    // 导航结束对话框显示状态
+    val showDialog by routePlanViewModel.showCameraDialog.collectAsState()
 
     // 使用 AndroidView 将 AMapNaviView 嵌入到 Compose 中
     AndroidView(
@@ -76,6 +84,26 @@ fun NavigationScreen(
             view?.onPause()
             view?.onDestroy()
         }
+    }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { routePlanViewModel.onCameraDialogDismissed() },
+            title = { Text("提示") },
+            text = { Text("导航已结束，是否需要启动相机识别周围环境？") },
+            confirmButton = {
+                Button(
+                    onClick = onEndNaviTask
+                ) {
+                    Text("是")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { routePlanViewModel.onCameraDialogDismissed() }) {
+                    Text("否")
+                }
+            }
+        )
     }
 
     // TODO: 添加其他 UI 元素，例如返回按钮 (如果需要的话)

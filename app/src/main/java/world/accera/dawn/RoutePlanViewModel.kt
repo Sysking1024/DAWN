@@ -28,6 +28,9 @@ import com.amap.api.navi.model.AimLessModeCongestionInfo
 import com.amap.api.navi.model.AimLessModeStat
 import com.amap.api.navi.model.NaviInfo
 import com.amap.api.navi.model.NaviLatLng
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import world.accera.dawn.data.RouteOptionSummary
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -59,9 +62,16 @@ class RoutePlanViewModel(application: Application) : AndroidViewModel(applicatio
     private val _errorMessageState = mutableStateOf<String?>(null)
     val errorMessageState: State<String?> = _errorMessageState
 
+    // 终点状态，对外暴露
+    private val _destinationNameState = mutableStateOf<String?>(null)
+    val destinationNameState: State<String?> = _destinationNameState
+
+    // 用于控制是否显示对话框的 StateFlow
+    private val _showCameraDialog = MutableStateFlow(false)
+    val showCameraDialog: StateFlow<Boolean> = _showCameraDialog.asStateFlow()
+
     // --- ViewModel 内部状态 ---
     private var aMapNavi: AMapNavi? = null
-    // private var routeSearch: RouteSearch? = null // *** 移除 RouteSearch 实例 ***
 
     private var currentOrigin: NaviLatLng? = null
     private var currentDestination: NaviLatLng? = null
@@ -116,6 +126,7 @@ class RoutePlanViewModel(application: Application) : AndroidViewModel(applicatio
         currentOrigin = NaviLatLng(originLat, originLon)
         currentDestination = NaviLatLng(destLat, destLon)
         currentDestinationName = destName // 存储终点名称用于UI显示
+        _destinationNameState.value = destName
         lastCalculatedModeIndex = transportModeIndex
 
         Log.d(TAG, "开始规划路径: Mode=${getTransportModeName(transportModeIndex)}, Origin=(${originLat}, ${originLon}), Dest=(${destLat}, ${destLon}), DestName=${destName}")
@@ -202,7 +213,7 @@ class RoutePlanViewModel(application: Application) : AndroidViewModel(applicatio
         try {
             // 发起导航
             // NaviType.GPS corresponds to real-time navigation (int 1)
-            val success = aMapNavi!!.startNavi(2)
+            val success = aMapNavi!!.startNavi(1)
 
             if (success) {
                 Log.d(TAG, "导航已成功发起")
@@ -441,7 +452,13 @@ class RoutePlanViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     override fun onEndEmulatorNavi() {
-        TODO("Not yet implemented")
+// 模拟导航结束，触发显示对话框的信号
+        _showCameraDialog.value = true
+    }
+
+    // 用户完成对话框交互后，调用此方法重置状态
+    fun onCameraDialogDismissed() {
+        _showCameraDialog.value = false
     }
 
     override fun onArriveDestination() {

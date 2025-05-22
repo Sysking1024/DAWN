@@ -90,7 +90,8 @@ class LocationViewModel(application: Application) : AndroidViewModel(application
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_LOCATION_EXTRA_COMMANDS,
             Manifest.permission.FOREGROUND_SERVICE,
-            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+            Manifest.permission.CAMERA
         )
 
         val missingPermissions = requiredPermissions.filter {
@@ -142,7 +143,7 @@ class LocationViewModel(application: Application) : AndroidViewModel(application
             }
             // 设置是否返回地址信息（默认返回地址信息）
             isNeedAddress = needAddress
-            isGpsFirst = true
+            // isGpsFirst = true
             // 设置是否允许模拟位置,默认为true，允许模拟位置
             // setMockEnable(true) // 通常调试时开启，发布时关闭或移除
             // 单位是毫秒，默认30000毫秒，建议超时时间不要低于8000毫秒。

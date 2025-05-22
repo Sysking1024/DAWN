@@ -17,6 +17,12 @@ xdmapLocationSearch = "10.1.201_loc6.4.9_sea9.7.4"
 navigationCompose = "2.9.0"
 naviXdmap = "10.0.800_3dmap10.0.800"
 naviXdmapLocationSearch = "10.1.201_3dmap10.1.201_loc6.4.9_sea9.7.4"
+tasksGenai = "0.10.24"
+tasksVision = "0.20230731"
+cameraCamera2 = "1.5.0-beta01"
+cameraCore = "1.5.0-beta01"
+cameraLifecycle = "1.5.0-beta01"
+cameraView = "1.5.0-beta01"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -42,6 +48,12 @@ xdmap-location-search = { group = "com.amap.api", name = "3dmap-location-search"
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 navi-xdmap = { group = "com.amap.api", name = "navi-3dmap", version.ref = "naviXdmap" }
 navi-xdmap-location-search = { group = "com.amap.api", name = "navi-3dmap-location-search", version.ref = "naviXdmapLocationSearch" }
+tasks-genai = { group = "com.google.mediapipe", name = "tasks-genai", version.ref = "tasksGenai" }
+tasks-vision = { group = "com.google.mediapipe", name = "tasks-vision", version.ref = "tasksVision" }
+androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "cameraCamera2" }
+androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "cameraCore" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "cameraLifecycle" }
+androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraView" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
