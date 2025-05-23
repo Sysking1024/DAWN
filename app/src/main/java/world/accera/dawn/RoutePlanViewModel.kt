@@ -213,7 +213,7 @@ class RoutePlanViewModel(application: Application) : AndroidViewModel(applicatio
         try {
             // 发起导航
             // NaviType.GPS corresponds to real-time navigation (int 1)
-            val success = aMapNavi!!.startNavi(1)
+            val success = aMapNavi!!.startNavi(2)
 
             if (success) {
                 Log.d(TAG, "导航已成功发起")
@@ -462,7 +462,8 @@ class RoutePlanViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     override fun onArriveDestination() {
-        TODO("Not yet implemented")
+        // 到达目的地
+        _showCameraDialog.value = true
     }
 
     override fun onGpsSignalWeak(p0: Boolean) {

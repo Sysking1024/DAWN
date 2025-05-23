@@ -40,8 +40,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import world.accera.dawn.mllms.ModelManager
 import java.util.concurrent.Executor
+import androidx.core.graphics.scale
 
 private const val TAG = "CameraRecognitionScreen"
+private const val TARGET_IMAGE_RESOLUTION = 768 // 可以选择 256, 512, 或 768
 
 @Composable
 fun CameraRecognitionScreen(
@@ -56,7 +58,7 @@ fun CameraRecognitionScreen(
     var isLoadingRecognition by remember { mutableStateOf(false) }
     val currentView = LocalView.current
     val destinationName by routePlanViewModel.destinationNameState
-    val prompt = "你是一个有着丰富经验的协助视障者出行的志愿者。现在有一位视障用户通过导航软件提供的连线功能与你取得了联系，他需要你告诉他目的地是否在图片中。你正在通过视障用户的手机摄像头帮助他。你需要用最精简、最准确的语言描述目的地是否在图片中，如果在图片中的话，你需要告诉用户方位。为了让你理解，下面以目的地是“肯德基”为例，来说明你要回复的句式。你需要严格遵守句式回复用户。例子：假设目的地是“肯德基”，如果目的地不在图片中：“我没有看到肯德基，你可能需要调整下方向重新拍摄照片”；如果图片中有目的地：“我看到肯德基了，大约在你10点方向，20米的样子。”。下面是用户要去的目的地，你需要灵活替换例子中的“肯德基”：“${ destinationName }”"
+    val prompt = "你是一个有着丰富经验的协助视障者出行的志愿者。现在有一位视障用户通过导航软件提供的连线功能与你取得了联系，他需要你告诉他目的地是否在图片中。你正在通过视障用户的手机摄像头帮助他。你需要用最精简、最准确的语言描述目的地是否在图片中，如果在图片中的话，你需要告诉用户方位。为了让你理解，下面以目的地是“肯德基”为例，来说明你要回复的句式。你需要严格遵守句式回复用户。例子：假设目的地是“肯德基”，如果目的地不在图片中：“我没有看到肯德基，你可能需要调整下方向重新拍摄照片”；如果图片中有目的地：“我看到肯德基了，大约在你10点方向，20米的样子。”。下面是用户要去的目的地，你需要灵活替换例子中的“肯德基”和方位词：“${ destinationName }”"
 
     // 设置相机控制器
     LaunchedEffect(Unit) {
@@ -90,8 +92,8 @@ fun CameraRecognitionScreen(
 
                         recognitionResult = null // 清除旧结果
                         scope.launch {
-                            ModelManager.clearSession()
                             val result = ModelManager.recognition(bitmap, prompt)
+                            //ModelManager.clearSession()
                             recognitionResult = result ?: "未能获取描述。"
                             currentView.announceForAccessibility(result)
                         }
@@ -167,7 +169,10 @@ private fun capturePhoto(
                         matrix,
                         true // filter: true 表示如果缩放则质量更好
                     )
-                    onPhotoCaptured(rotatedBitmap)
+
+                    val resizedBitmap = rotatedBitmap.scale(TARGET_IMAGE_RESOLUTION, TARGET_IMAGE_RESOLUTION)
+                    Log.i(TAG, "调整尺寸后 Bitmap 尺寸: ${resizedBitmap.width}x${resizedBitmap.height}")
+                    onPhotoCaptured(resizedBitmap)
                 } else {
                     onError(ImageCaptureException(ImageCapture.ERROR_UNKNOWN, "图像平面为空", null))
                 }

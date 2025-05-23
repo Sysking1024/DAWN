@@ -21,7 +21,7 @@ import world.accera.dawn.utils.ModelStateUtils
 
 object ModelManager {
     private const val TAG = "GemmaModelManager"
-    private const val MODEL_PATH = "/data/local/tmp/llm/model_version.task"
+    private const val MODEL_PATH = "/data/local/tmp/llm/model_version—_4b.task"
 
     private var llmInference: LlmInference? = null
     private var session: LlmInferenceSession? = null
@@ -56,13 +56,14 @@ if (_initState.value is ModelStateUtils.Initializing || _initState.value is Mode
                 builder()
                 .setModelPath(MODEL_PATH)
                 .setMaxNumImages(1)
+                    .setMaxTokens(4000)
                 .setPreferredBackend(LlmInference.Backend.GPU)
                 .build()
 
             sessionOptions =
                 LlmInferenceSessionOptions.builder()
                     .setTopK(10)
-                    .setTemperature(0.2f)
+                    .setTemperature(0.4f)
                     .setGraphOptions(GraphOptions.builder().setEnableVisionModality(true).build())
                     .build()
 
@@ -116,7 +117,8 @@ if (_initState.value is ModelStateUtils.Initializing || _initState.value is Mode
     }
 
     fun clearSession() {
-        this.session = null // 清理session，防止令牌过长
+        session?.close()
+        session = null // 清理session，防止令牌过长
         session =
             LlmInferenceSession.createFromOptions(llmInference, sessionOptions)
     }
