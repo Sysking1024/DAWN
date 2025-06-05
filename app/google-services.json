@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "987780394308",
+    "project_id": "dawn-45368",
+    "storage_bucket": "dawn-45368.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:987780394308:android:679da05c383361c030fb11",
+        "android_client_info": {
+          "package_name": "world.accera.dawn"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2uLWx5KGHYNK25iwY1YPfSSkhLpi06tM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

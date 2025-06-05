@@ -1,7 +1,11 @@
+import com.android.build.gradle.internal.packaging.defaultExcludes
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -59,6 +63,16 @@ dependencies {
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.ai)
+    implementation(libs.kotlin.sdk)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.ktor.client.android)
+    implementation(libs.volcengine.java.sdk.ark.runtime)
+    implementation(libs.speechengine.asr.tob) {
+        defaultExcludes
+    }
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

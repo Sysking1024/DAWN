@@ -10,6 +10,7 @@ import com.google.mediapipe.tasks.genai.llminference.LlmInference.LlmInferenceOp
 import com.google.mediapipe.tasks.genai.llminference.LlmInference.LlmInferenceOptions.*
 import com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession
 import com.google.mediapipe.tasks.genai.llminference.LlmInferenceSession.LlmInferenceSessionOptions
+import com.google.mediapipe.tasks.genai.llminference.PromptTemplates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -19,9 +20,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import world.accera.dawn.utils.ModelStateUtils
 
-object ModelManager {
-    private const val TAG = "GemmaModelManager"
-    private const val MODEL_PATH = "/data/local/tmp/llm/model_version—_4b.task"
+object GemmaManager {
+    private const val TAG = "GemmaManager"
+    private const val MODEL_PATH = "/data/local/tmp/llm/model_version_4b.task"
 
     private var llmInference: LlmInference? = null
     private var session: LlmInferenceSession? = null
@@ -56,14 +57,23 @@ if (_initState.value is ModelStateUtils.Initializing || _initState.value is Mode
                 builder()
                 .setModelPath(MODEL_PATH)
                 .setMaxNumImages(1)
-                    .setMaxTokens(4000)
+                    .setMaxTokens(4096)
                 .setPreferredBackend(LlmInference.Backend.GPU)
                 .build()
 
             sessionOptions =
                 LlmInferenceSessionOptions.builder()
-                    .setTopK(10)
-                    .setTemperature(0.4f)
+                    .setTopK(5)
+                    .setTemperature(0.2f)
+                    .setTopP(0.5f)
+                    .setPromptTemplates(
+                        PromptTemplates.builder()
+                            .setModelPrefix("<start_of_turn>model")
+                            .setModelSuffix("<end_of_turn>")
+                            .setUserPrefix("<start_of_turn>user")
+                            .setUserSuffix("<end_of_turn>\n")
+                            .build()
+                    )
                     .setGraphOptions(GraphOptions.builder().setEnableVisionModality(true).build())
                     .build()
 
@@ -90,7 +100,7 @@ if (_initState.value is ModelStateUtils.Initializing || _initState.value is Mode
      */
     suspend fun recognition(bitmap: Bitmap, prompt: String = "用中文描述图片"): String? {
         // 检查初始化状态，这一步不需要切换上下文，因为它很快
-        if (_initState.value !is ModelStateUtils.Initialized) {
+        if (_initState.value !is ModelStateUtils.Initialized || session == null) {
             Log.w(TAG, "模型未初始化，无法执行识别。")
             return null
         }
@@ -116,11 +126,25 @@ if (_initState.value is ModelStateUtils.Initializing || _initState.value is Mode
         }
     }
 
-    fun clearSession() {
+    fun newSession() {
+        if (_initState.value is ModelStateUtils.Initializing) {
+            return
+        }
+
+        _initState.value = ModelStateUtils.Initializing
+
         session?.close()
-        session = null // 清理session，防止令牌过长
-        session =
-            LlmInferenceSession.createFromOptions(llmInference, sessionOptions)
+        session = null
+        session = LlmInferenceSession.createFromOptions(llmInference, sessionOptions)
+
+        val inference = llmInference
+        if (inference != null) {
+            _initState.value = ModelStateUtils.Initialized(inference)
+        }
+    }
+
+    fun sizeInTokens(text: String): Int? {
+        return session?.sizeInTokens(text)
     }
 
     /**

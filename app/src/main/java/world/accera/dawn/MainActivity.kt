@@ -27,6 +27,7 @@ const val PoiDetailRoute = "poi_detail_screen" // 详情页的基础路由
 const val RoutePlanRoute = "route_plan_screen" // 出行方案页基础路由
 const val NavigationRoute = "navigation_screen"
 const val CameraRecognitionRoute = "camera_recognition_screen"
+const val ChatScreenRoute = "chat_screen"
 
 // 参数名常量 - 先定义所有参数名常量
 const val PoiIdNavArg = "poiId" // 用于传递 POI ID 的导航参数名称
@@ -86,6 +87,7 @@ class MainActivity : ComponentActivity() {
                     val locationViewModel: LocationViewModel = viewModel()
                     val poiSearchViewModel: PoiSearchViewModel = viewModel()
                     val routePlanViewModel: RoutePlanViewModel = viewModel()
+                    val chatViewModel: ChatViewModel = viewModel()
 
                     // *** 使用 LaunchedEffect 收集 LocationViewModel 的权限请求流 ***
                     // 这个 LaunchedEffect 应该放在 NavHost 的外部，确保它在整个 Activity/setContent 生命周期内运行
@@ -106,7 +108,11 @@ class MainActivity : ComponentActivity() {
 
 
                     // *** 设置 NavHost，定义导航图 ***
-                    NavHost(navController = navController, startDestination = MainRoute) {
+                    /*NavHost(navController = navController, startDestination = ChatScreenRoute) {
+                        composable(ChatScreenRoute) {
+                            ChatScreen(viewModel = chatViewModel)
+                        } --此部分不在比赛范围内*/
+
                         // 主界面
                         composable(MainRoute) {
                             MainScreen(
