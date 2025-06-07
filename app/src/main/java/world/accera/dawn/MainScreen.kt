@@ -17,7 +17,6 @@ import java.util.Locale
 
 @Composable
 fun MainScreen(
-    // 接收 LocationViewModel 实例，通常由 Navigation 或 Activity 提供
     locationViewModel: LocationViewModel = viewModel(),
     // 点击搜索框时的回调，用于触发导航到 POI 搜索界面
     onSearchClick: () -> Unit = {}
@@ -49,7 +48,7 @@ fun MainScreen(
         Text(
             text = "Demo",
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier.padding(bottom = 24.dp, top = 20.dp)
         )
 
         Spacer(modifier = Modifier.height(16.dp)) // 增加标题下间距

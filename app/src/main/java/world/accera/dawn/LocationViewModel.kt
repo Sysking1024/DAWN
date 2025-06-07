@@ -33,9 +33,6 @@ class LocationViewModel(application: Application) : AndroidViewModel(application
     val isLocatingState = mutableStateOf(false)
     val isContinuousModeActive = mutableStateOf(false)
 
-    // 用于请求权限的 SharedFlow
-    private val _permissionRequestFlow = MutableSharedFlow<Array<String>>()
-    val permissionRequestFlow = _permissionRequestFlow.asSharedFlow()
 
     override fun onLocationChanged(aMapLocation: AMapLocation?) {
         if (aMapLocation != null) {
@@ -83,38 +80,15 @@ class LocationViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    private fun checkAndRequestLocationPermissions(): Boolean {
-        val context = this.getApplication<Application>().applicationContext
-        val requiredPermissions = arrayOf(
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_LOCATION_EXTRA_COMMANDS,
-            Manifest.permission.FOREGROUND_SERVICE,
-            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-            Manifest.permission.CAMERA
-        )
-
-        val missingPermissions = requiredPermissions.filter {
-            ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
-        }
-
-        return if (missingPermissions.isEmpty()) {
-            true // 所有权限都已授予
-        } else {
-            // 请求缺失的权限
-            viewModelScope.launch {
-                _permissionRequestFlow.emit(missingPermissions.toTypedArray())
-            }
-            false // 需要请求权限
-        }
-    }
 
     fun startLocation(isOnce: Boolean = true, needAddress: Boolean = true) {
-        if (!checkAndRequestLocationPermissions()) {
+
+        if (!hasAllPermissions()) {
             locationErrorState.value = "定位权限不足"
             Log.w(TAG, "定位权限不足，请先授予权限")
             return
         }
+
 
         if (locationClient == null) {
             locationErrorState.value = "定位客户端未初始化"
@@ -159,6 +133,19 @@ class LocationViewModel(application: Application) : AndroidViewModel(application
         //启动定位
         locationClient?.startLocation()
         Log.d(TAG, "开始定位, isOnce: $isOnce, needAddress: $needAddress")
+    }
+
+    private fun hasAllPermissions(): Boolean {
+        val context = getApplication<Application>().applicationContext
+        val requiredPermissions = arrayOf(
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+            Manifest.permission.CAMERA
+        )
+        return requiredPermissions.all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        }
     }
 
     fun stopLocation() {

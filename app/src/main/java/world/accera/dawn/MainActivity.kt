@@ -1,15 +1,19 @@
 package world.accera.dawn
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -43,35 +47,79 @@ const val RoutePlanDestNameArg = "rpDestName" // 出行方案终点名称参数�
 
 // 带参数的路由 - 后定义，使用上面定义的参数名常量
 // POI 详情页带参数路由
-const val PoiDetailRouteWithArgs = "$PoiDetailRoute/{$PoiIdNavArg}?$OriginLatNavArg={$OriginLatNavArg}&$OriginLonNavArg={$OriginLonNavArg}"
+const val PoiDetailRouteWithArgs =
+    "$PoiDetailRoute/{$PoiIdNavArg}?$OriginLatNavArg={$OriginLatNavArg}&$OriginLonNavArg={$OriginLonNavArg}"
 
 // 出行方案页带参数路由，使用明确的字符串模板语法
-const val RoutePlanRouteWithArgs = "$RoutePlanRoute?${RoutePlanOriginLatArg}={${RoutePlanOriginLatArg}}&${RoutePlanOriginLonArg}={${RoutePlanOriginLonArg}}&${RoutePlanDestLatArg}={${RoutePlanDestLatArg}}&${RoutePlanDestLonArg}={${RoutePlanDestLonArg}}&${RoutePlanDestNameArg}={${RoutePlanDestNameArg}}"
+const val RoutePlanRouteWithArgs =
+    "$RoutePlanRoute?${RoutePlanOriginLatArg}={${RoutePlanOriginLatArg}}&${RoutePlanOriginLonArg}={${RoutePlanOriginLonArg}}&${RoutePlanDestLatArg}={${RoutePlanDestLatArg}}&${RoutePlanDestLonArg}={${RoutePlanDestLonArg}}&${RoutePlanDestNameArg}={${RoutePlanDestNameArg}}"
 
 class MainActivity : ComponentActivity() {
 
-    // 注册权限请求启动器
-    private val requestMultiplePermissionsLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            var allGranted = true
-            permissions.entries.forEach {
-                if (!it.value) {
-                    allGranted = false
-                    Log.w("Permissions", "Permission denied: ${it.key}")
-                }
-            }
+    // 1. 前台权限（不含后台定位）
+    private val foregroundPermissions = arrayOf(
+        Manifest.permission.CAMERA,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_LOCATION_EXTRA_COMMANDS,
+        Manifest.permission.FOREGROUND_SERVICE
+    )
 
+    // 2. 后台定位权限
+    private val backgroundPermissions = arrayOf(
+        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+    )
+
+    // 记录是否已经请求过后台定位，避免重复弹窗
+    private var hasRequestedBackgroundLocation = false
+
+    private val requestForegroundPermissionsLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val allGranted = permissions.values.all { it }
+            Log.d("PERMISSION", "前台权限回调, allGranted=$allGranted, permissions=$permissions")
             if (allGranted) {
-                Log.d("Permissions", "All requested permissions granted.")
-                // 权限授予后，ViewModel 内部应该能再次尝试定位并成功
+                // 前台权限全部授予，主动触发定位
+                locationViewModel.startLocation(isOnce = true, needAddress = true)
+                Log.d("PERMISSION", "前台权限全部授予，调用 startLocation")
+                // 检查是否需要请求后台定位
+                requestBackgroundLocationIfNeeded()
             } else {
-                Log.e("Permissions", "Some permissions were denied.")
-                // 用户拒绝了部分或全部权限
+                // 权限被拒绝
+                locationViewModel.locationErrorState.value = "请授予所有权限以正常使用定位功能"
+                Log.d("PERMISSION", "前台权限未全部授予，不调用 startLocation")
             }
         }
 
+    // 后台定位权限请求
+    private val requestBackgroundLocationLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val allGranted = permissions.values.all { it }
+            Log.d(
+                "PERMISSION",
+                "后台定位权限回调, allGranted=$allGranted, permissions=$permissions"
+            )
+            // 这里可以根据需要处理后台定位权限被拒绝的情况
+        }
+
+
+    private val locationViewModel: LocationViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(
+            "PERMISSION",
+            "onCreate, hasAllForegroundPermissions=${hasAllForegroundPermissions()}, hasBackgroundLocationPermission=${hasBackgroundLocationPermission()}"
+        )
+
+        // 启动时自动检测并请求权限
+        if (!hasAllForegroundPermissions()) {
+            Log.d("PERMISSION", "请求前台权限")
+            requestForegroundPermissionsLauncher.launch(foregroundPermissions)
+        } else {
+            // 已有前台权限，直接开始定位
+            locationViewModel.startLocation(isOnce = true, needAddress = true)
+            // 检查是否需要请求后台定位
+            requestBackgroundLocationIfNeeded()
+        }
 
         setContent {
             DAWNTheme {
@@ -84,34 +132,17 @@ class MainActivity : ComponentActivity() {
 
                     // 获取 ViewModel 实例
                     // ViewModel 会在 NavHost 的生命周期内被正确管理
-                    val locationViewModel: LocationViewModel = viewModel()
+//                    val locationViewModel: LocationViewModel = viewModel()
                     val poiSearchViewModel: PoiSearchViewModel = viewModel()
                     val routePlanViewModel: RoutePlanViewModel = viewModel()
                     val chatViewModel: ChatViewModel = viewModel()
 
-                    // *** 使用 LaunchedEffect 收集 LocationViewModel 的权限请求流 ***
-                    // 这个 LaunchedEffect 应该放在 NavHost 的外部，确保它在整个 Activity/setContent 生命周期内运行
-                    LaunchedEffect(locationViewModel) {
-                        Log.d(
-                            "MainActivity",
-                            "MainActivity LaunchedEffect: Collecting permissionRequestFlow"
-                        )
-                        locationViewModel.permissionRequestFlow.collect { permissionsArray ->
-                            Log.d(
-                                "MainActivity",
-                                "MainActivity: Received permission request from ViewModel for: ${permissionsArray.joinToString()}"
-                            )
-                            // 收到 ViewModel 的请求后，启动 Activity 的权限请求
-                            requestMultiplePermissionsLauncher.launch(permissionsArray)
-                        }
-                    }
-
 
                     // *** 设置 NavHost，定义导航图 ***
-                    /*NavHost(navController = navController, startDestination = ChatScreenRoute) {
-                        composable(ChatScreenRoute) {
-                            ChatScreen(viewModel = chatViewModel)
-                        } --此部分不在比赛范围内*/
+                    NavHost(navController = navController, startDestination = MainRoute) {
+                        /**                        composable(ChatScreenRoute) {
+                        //                            ChatScreen(viewModel = chatViewModel)
+                        //                        }**/
 
                         // 主界面
                         composable(MainRoute) {
@@ -299,10 +330,40 @@ class MainActivity : ComponentActivity() {
                         }
 
                         // ***识别界面 ***
-                        composable(CameraRecognitionRoute) { CameraRecognitionScreen(routePlanViewModel = routePlanViewModel) }
+                        composable(CameraRecognitionRoute) {
+                            CameraRecognitionScreen(
+                                routePlanViewModel = routePlanViewModel
+                            )
+                        }
                     }
                 }
             }
         }
     }
+
+    // 检查前台权限是否全部授予
+    private fun hasAllForegroundPermissions(): Boolean {
+        return foregroundPermissions.all {
+            ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    // 检查后台定位权限是否授予
+    private fun hasBackgroundLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    // 检查是否需要请求后台定位权限
+    private fun requestBackgroundLocationIfNeeded() {
+        // Android 10+ 才有后台定位权限
+        if (!hasBackgroundLocationPermission() && !hasRequestedBackgroundLocation && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            hasRequestedBackgroundLocation = true
+            Log.d("PERMISSION", "请求后台定位权限")
+            requestBackgroundLocationLauncher.launch(backgroundPermissions)
+        }
+    }
+
 }
