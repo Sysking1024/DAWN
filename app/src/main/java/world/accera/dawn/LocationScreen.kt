@@ -32,12 +32,6 @@ fun LocationScreen(
     val isLocating by locationViewModel.isLocatingState
     val isContinuousModeActive by locationViewModel.isContinuousModeActive
 
-    // 收集权限请求事件
-    LaunchedEffect(Unit) { // 使用 Unit 确保只在 Composable 首次进入组合时订阅一次
-        locationViewModel.permissionRequestFlow.collect { permissionsToRequest ->
-            onRequestPermissions(permissionsToRequest)
-        }
-    }
 
     Column(
         modifier = Modifier
@@ -92,11 +86,7 @@ fun LocationScreen(
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
             if (!fineLocationGranted) {
-                coroutineScope.launch { // 确保在协程中调用 suspend 方法
-                    locationViewModel.permissionRequestFlow.collect{ permissionsArray ->
-                        onRequestPermissions(permissionsArray)
-                    }
-                }
+
                 // 或者直接调用请求
                 // onRequestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
             } else {

@@ -97,7 +97,14 @@ class MainActivity : ComponentActivity() {
                 "PERMISSION",
                 "后台定位权限回调, allGranted=$allGranted, permissions=$permissions"
             )
-            // 这里可以根据需要处理后台定位权限被拒绝的情况
+            if (allGranted) {
+                // 后台定位权限授予后，主动触发定位
+                locationViewModel.startLocation(isOnce = true, needAddress = true)
+                Log.d("PERMISSION", "后台定位权限全部授予，调用 startLocation")
+            } else {
+                locationViewModel.locationErrorState.value = "请授予后台定位权限以支持后台定位"
+                Log.d("PERMISSION", "后台定位权限未全部授予，不调用 startLocation")
+            }
         }
 
 

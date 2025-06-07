@@ -90,16 +90,22 @@ class LocationViewModel(application: Application) : AndroidViewModel(application
         }
 
 
+        // 关键：如果 client 为 null，重新初始化
         if (locationClient == null) {
-            locationErrorState.value = "定位客户端未初始化"
-            Log.e(TAG, "AMapLocationClient is null, cannot start location.")
-            return
+            try {
+                locationClient = AMapLocationClient(this.getApplication<Application>().applicationContext)
+                locationClient?.setLocationListener(this)
+                Log.d(TAG, "权限授予后重新初始化 AMapLocationClient")
+            } catch (e: Exception) {
+                Log.e(TAG, "初始化AMapLocationClient失败", e)
+                locationErrorState.value = "初始化定位客户端失败: ${e.message}"
+                return
+            }
         }
 
         isLocatingState.value = true
         isContinuousModeActive.value = isOnce
         locationErrorState.value = null // 清除之前的错误
-
         // 初始化AMapLocationClientOption对象
         locationOption = AMapLocationClientOption().apply {
             // 设置定位模式为高精度模式。
