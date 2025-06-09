@@ -1,16 +1,24 @@
 package world.accera.dawn
 
+import android.os.Bundle
+import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amap.api.location.AMapLocation
+import com.amap.api.maps.MapView
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -37,90 +45,187 @@ fun MainScreen(
         }
     }
 
-
-    Column(
+    // 替换原来的中间区域部分
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 应用标题
-        Text(
-            text = "Demo",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 24.dp, top = 20.dp)
+        // 底层：MapViewContainer
+        MapViewContainer(
+            modifier = Modifier.fillMaxSize(),
+            locationViewModel = locationViewModel
         )
 
-        Spacer(modifier = Modifier.height(16.dp)) // 增加标题下间距
+        // 上层：OutlinedTextField 放置在底部
+        var text by remember { mutableStateOf("") }
+        DestinationSearchCard(
+            value = text,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter),
+            onSearchClick = onSearchClick,
 
-        // 中间区域：展示当前定位信息文本
-        // 使用 Column 嵌套，方便文本垂直排列
+        )
+    }
+}
+
+    // 辅助 Composable：用于简洁显示当前定位信息文本
+    @Composable
+    fun CurrentLocationTextView(location: AMapLocation) {
+        val sdf = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) }
+
         Column(
-            modifier = Modifier
-                .weight(1f) // 占据中间剩余空间
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp), // 左右内边距
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center // 内容垂直居中
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            if (isLocating) {
-                CircularProgressIndicator(modifier = Modifier.size(48.dp))
-                Text("正在获取当前位置...")
-            } else if (locationError != null) {
+            Text("当前位置信息:", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "时间: ${sdf.format(Date(location.time))}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                "来源: ${getLocationTypeString(location.locationType)}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text("经度: ${location.longitude}", style = MaterialTheme.typography.bodyMedium)
+            Text("纬度: ${location.latitude}", style = MaterialTheme.typography.bodyMedium)
+            Text("精度(米): ${location.accuracy}", style = MaterialTheme.typography.bodyMedium)
+            if (location.address.isNotBlank()) {
                 Text(
-                    text = "定位失败: ${locationError!!}",
-                    color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center // 居中显示
+                    "地址: ${location.address}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
                 )
-                // 可以添加一个重试按钮
-                // Button(onClick = { locationViewModel.startLocation(isOnce = true, needAddress = true) }) {
-                //     Text("重试定位")
-                // }
-            } else if (locationResult != null) {
-                CurrentLocationTextView(location = locationResult!!)
             } else {
-                Text("点击下方搜索框开始定位并搜索")
+                Text(
+                    "地址信息获取中...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
             }
+            if (location.errorCode != 0) {
+                Text(
+                    "定位错误码: ${location.errorCode}",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Log.d(
+                "MainScreen", "定位详情: \n" +
+                        "纬度: ${location.latitude}\n" +
+                        "经度: ${location.longitude}\n" +
+                        "精度: ${location.accuracy}\n" +
+                        "错误码: ${location.errorCode}\n" +
+                        "地址: ${location.address}\n" +
+                        "国家: ${location.country}\n" +
+                        "省份: ${location.province}\n" +
+                        "城市: ${location.city}\n" +
+                        "区县: ${location.district}\n" +
+                        "街道: ${location.street}\n" +
+                        "街道号码: ${location.streetNum}\n" +
+                        "POI名称: ${location.poiName}"
+            )
+
+        }
+    }
+
+
+
+@Composable
+fun DestinationSearchCard(
+    modifier: Modifier = Modifier,
+    title: String = "搜索目的地",
+    value: String,
+    onSearchClick: () -> Unit = {}
+) {
+    Column(
+        modifier = modifier
+            .background(
+                color = Color.White,
+                shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)
+            )
+            .padding(horizontal = 24.dp, vertical = 16.dp)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = title,
+                fontSize = 24.sp,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.Black
+            )
         }
 
-
-        // 下方区域：搜索编辑框入口
-        // 使用 OutlinedTextField 作为视觉表示，但使其可点击以触发导航
-        OutlinedTextField(
-            value = "", // 不显示实际输入值
-            onValueChange = { /* 不处理输入 */ },
-            label = { Text("搜索目的地") },
-            readOnly = true, // 设置为只读，防止弹出键盘
+        Spacer(modifier = Modifier.height(16.dp))
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onSearchClick() }, // 点击触发导航回调
-            enabled = !isLocating // 定位进行中时禁用点击
-        )
+                .padding(bottom = 100.dp)
+
+        ) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = {},
+                placeholder = { Text("请输入目的地") },
+                shape = RoundedCornerShape(16.dp),
+                singleLine = true,
+                readOnly = true,
+                enabled = false,
+                modifier = Modifier.fillMaxWidth()
+                    .clickable {
+                        Log.d("MainScreen", "点击了搜索框")
+                        onSearchClick()
+                    },
+            )
+        }
     }
 }
-
-// 辅助 Composable：用于简洁显示当前定位信息文本
 @Composable
-fun CurrentLocationTextView(location: AMapLocation) {
-    val sdf = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) }
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text("当前位置信息:", style = MaterialTheme.typography.titleMedium)
-        Text("时间: ${sdf.format(Date(location.time))}", style = MaterialTheme.typography.bodyMedium)
-        Text("来源: ${getLocationTypeString(location.locationType)}", style = MaterialTheme.typography.bodyMedium)
-        Text("经度: ${location.longitude}", style = MaterialTheme.typography.bodyMedium)
-        Text("纬度: ${location.latitude}", style = MaterialTheme.typography.bodyMedium)
-        Text("精度(米): ${location.accuracy}", style = MaterialTheme.typography.bodyMedium)
-        if (location.address.isNotBlank()) {
-            Text("地址: ${location.address}", style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
-        } else {
-            Text("地址信息获取中...", style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
-        }
-        if (location.errorCode != 0) {
-            Text("定位错误码: ${location.errorCode}", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+fun MapViewContainer(
+    modifier: Modifier = Modifier,
+    locationViewModel: LocationViewModel
+) {
+    val context = LocalContext.current
+    val mapView = remember {
+        MapView(context).apply {
+            map.uiSettings.isZoomControlsEnabled = true
         }
     }
+
+    val locationResult by locationViewModel.locationResultState
+
+    AndroidView(
+        factory = { mapView },
+        modifier = modifier
+    )
+
+
+    // 设置地图初始位置
+    LaunchedEffect(locationResult) {
+        locationResult?.let { result ->
+            val latLng = com.amap.api.maps.model.LatLng(
+                result.latitude,
+                result.longitude
+            )
+            mapView.map.moveCamera(
+                com.amap.api.maps.CameraUpdateFactory.newLatLngZoom(latLng, 15f)
+            )
+        }
+    }
+
+    // 生命周期绑定
+    DisposableEffect(Unit) {
+        mapView.onCreate(Bundle())
+        onDispose {
+            mapView.onDestroy()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        mapView.onResume()
+    }
 }
+
+
