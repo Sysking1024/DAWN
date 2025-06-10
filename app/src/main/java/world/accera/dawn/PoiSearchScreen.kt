@@ -13,11 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -93,10 +95,20 @@ fun PoiSearchScreen(
             OutlinedTextField(
                 value = keywordInput,
                 onValueChange = { keywordInput = it },
-                label = { Text("输入搜索关键词") },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(60.dp)
                     .focusRequester(focusRequester),
+                shape = MaterialTheme.shapes.small.copy(
+                    topStart = CornerSize(30.dp),
+                    topEnd = CornerSize(30.dp),
+                    bottomStart = CornerSize(30.dp),
+                    bottomEnd = CornerSize(30.dp)
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.Black,
+                    unfocusedBorderColor = Color.Black
+                ),
                 singleLine = true,
                 enabled = !isLoading // 加载时禁用
             )
@@ -122,7 +134,7 @@ fun PoiSearchScreen(
                     }
 
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(60.dp),
                 // *** 当正在加载或当前定位城市信息不可用时，禁用搜索按钮 ***
                 enabled = !isLoading // 如果没有城市信息，ViewModel内部会判断关键词，如果关键词非空，ViewModel可能依然尝试搜索
             ) {

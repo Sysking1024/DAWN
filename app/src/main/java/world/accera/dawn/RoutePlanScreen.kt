@@ -31,12 +31,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -75,19 +74,56 @@ fun RoutePlanScreen(
     val isLoading by routePlanViewModel.isLoadingState       // 观察加载状态
     val errorMessage by routePlanViewModel.errorMessageState   // 观察错误信息
 
-    // *** 使用 LaunchedEffect 在屏幕组合时发起第一次算路 ***
-    // Key on origin/destination/name parameters. 确保在这些参数变化时（通常只在首次进入时发生）触发算路
-    LaunchedEffect(originLat, originLon, destLat, destLon, destName) {
-        // 在 ViewModel 未加载且当前选中模式还没有数据时，发起算路
-        // 避免重复算路或在 ViewModel 已有结果时再次算路
-        // 这里的判断逻辑可以根据 ViewModel 的实际情况微调
-        if (!isLoading && allRouteData[selectedTabIndex]?.isEmpty() != false) {
-            Log.d("RoutePlanScreen", "LaunchedEffect: Triggering initial route planning for mode ${transportModes[selectedTabIndex]}")
-            // 调用 ViewModel 的 planRoute 方法，传递起终点和当前选中模式
-            routePlanViewModel.planRoute(originLat, originLon, destLat, destLon, destName, selectedTabIndex)
-        }
+    // 添加内部状态管理
+    var internalOriginLat by remember { mutableStateOf(originLat) }
+    var internalOriginLon by remember { mutableStateOf(originLon) }
+    var internalDestLat by remember { mutableStateOf(destLat) }
+    var internalDestLon by remember { mutableStateOf(destLon) }
+    var internalDestName by remember { mutableStateOf(destName) }
+
+    // 添加起点名称状态（默认为经纬度）
+    var originName by remember { mutableStateOf("($originLat, $originLon)") }
+
+    // 交换起终点的逻辑
+    val swapOriginDestination = {
+        // 交换经纬度
+        val tempLat = internalOriginLat
+        val tempLon = internalOriginLon
+        internalOriginLat = internalDestLat
+        internalOriginLon = internalDestLon
+        internalDestLat = tempLat
+        internalDestLon = tempLon
+
+        // 交换名称
+        val tempName = originName
+        originName = internalDestName
+        internalDestName = tempName
+
+        // 触发重新规划路径
+        routePlanViewModel.planRoute(
+            internalOriginLat,
+            internalOriginLon,
+            internalDestLat,
+            internalDestLon,
+            internalDestName,
+            selectedTabIndex
+        )
     }
 
+
+    // 初始化规划
+    LaunchedEffect(Unit) {
+        if (!isLoading && allRouteData[selectedTabIndex]?.isEmpty() != false) {
+            routePlanViewModel.planRoute(
+                internalOriginLat,
+                internalOriginLon,
+                internalDestLat,
+                internalDestLon,
+                internalDestName,
+                selectedTabIndex
+            )
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -116,7 +152,11 @@ fun RoutePlanScreen(
                 originText = "($originLat, $originLon)", // 暂时显示经纬度，后续可逆地理编码
                 destinationText = destName
             )
-            OriginDestinationInputSection(originDestination = originDestination)
+            OriginDestinationInputSection(
+                originName = originName,
+                destinationName = internalDestName,
+                onSwapClick = swapOriginDestination // 传入交换回调
+            )
 
             Spacer(modifier = Modifier.height(12.dp)) // 间距
 
@@ -187,38 +227,45 @@ fun RoutePlanScreen(
 
 // --- OriginDestinationInputSection (保持不变) ---
 @Composable
-fun OriginDestinationInputSection(originDestination: OriginDestination) {
+fun OriginDestinationInputSection(
+    originName: String,
+    destinationName: String,
+    onSwapClick: () -> Unit
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         OutlinedTextField(
-            value = originDestination.originText,
+            value = originName, // 使用起点名称
             onValueChange = { /* 不处理输入 */ },
-            readOnly = true, // 只读
-            modifier = Modifier.fillMaxWidth(),
+            readOnly = true,
+            maxLines = 1,
+            modifier = Modifier.fillMaxWidth().height(60.dp),
             shape = MaterialTheme.shapes.small.copy(
-                topStart = CornerSize(16.dp),
-                topEnd = CornerSize(16.dp),
-                bottomStart = CornerSize(16.dp),
-                bottomEnd = CornerSize(16.dp)
+                topStart = CornerSize(30.dp),
+                topEnd = CornerSize(30.dp),
+                bottomStart = CornerSize(30.dp),
+                bottomEnd = CornerSize(30.dp)
             ),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color.Black,
                 unfocusedBorderColor = Color.Black
             )
         )
-        //高度60dp
+
+
         OutlinedTextField(
-            value = originDestination.destinationText,
+            value = destinationName, // 使用目的地名称
             onValueChange = { /* 不处理输入 */ },
-            readOnly = true, // 只读
-            modifier = Modifier.fillMaxWidth(),
+            readOnly = true,
+            maxLines = 1,
+            modifier = Modifier.fillMaxWidth().height(60.dp),
             shape = MaterialTheme.shapes.small.copy(
-                topStart = CornerSize(16.dp),
-                topEnd = CornerSize(16.dp),
-                bottomStart = CornerSize(16.dp),
-                bottomEnd = CornerSize(16.dp)
+                topStart = CornerSize(30.dp),
+                topEnd = CornerSize(30.dp),
+                bottomStart = CornerSize(30.dp),
+                bottomEnd = CornerSize(30.dp)
             ),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Color.Black,
@@ -228,11 +275,8 @@ fun OriginDestinationInputSection(originDestination: OriginDestination) {
 
         Button(
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0000EB)),
-            onClick = {
-                // TODO: 实现调换起终点逻辑
-            },
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
+            onClick = onSwapClick,
+            modifier = Modifier.fillMaxWidth().height(60.dp),
         ) {
             Text("调换起终点")
         }

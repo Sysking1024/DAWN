@@ -114,7 +114,15 @@ class RoutePlanViewModel(application: Application) : AndroidViewModel(applicatio
      * @param destName 终点名称
      * @param transportModeIndex 交通方式索引 (0:步行, 1:公交, 2:驾车, 3:打车)
      */
-    fun planRoute(originLat: Double, originLon: Double, destLat: Double, destLon: Double, destName: String, transportModeIndex: Int) {
+    fun planRoute(originLat: Double, originLon: Double,
+                  destLat: Double, destLon: Double,
+                  destName: String, transportModeIndex: Int) {
+        // 更新当前起终点状态
+        currentOrigin = NaviLatLng(originLat, originLon)
+        currentDestination = NaviLatLng(destLat, destLon)
+        currentDestinationName = destName
+        _destinationNameState.value = destName
+        lastCalculatedModeIndex = transportModeIndex
         if (aMapNavi == null) {
             _errorMessageState.value = "导航服务未初始化"
             Log.e(TAG, "AMapNavi is null, cannot plan route.")
@@ -213,7 +221,7 @@ class RoutePlanViewModel(application: Application) : AndroidViewModel(applicatio
         try {
             // 发起导航
             // NaviType.GPS corresponds to real-time navigation (int 1)
-            val success = aMapNavi!!.startNavi(2)
+            val success = aMapNavi!!.startNavi(1)
 
             if (success) {
                 Log.d(TAG, "导航已成功发起")

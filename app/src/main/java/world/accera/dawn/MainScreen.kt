@@ -2,9 +2,9 @@ package world.accera.dawn
 
 import android.os.Bundle
 import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -138,47 +138,60 @@ fun DestinationSearchCard(
     value: String,
     onSearchClick: () -> Unit = {}
 ) {
-    Column(
-        modifier = modifier
-            .background(
-                color = Color.White,
-                shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)
-            )
-            .padding(horizontal = 24.dp, vertical = 16.dp)
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = title,
-                fontSize = 24.sp,
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.Black
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 100.dp)
-
+                .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
-            OutlinedTextField(
-                value = value,
-                onValueChange = {},
-                placeholder = { Text("请输入目的地") },
-                shape = RoundedCornerShape(16.dp),
-                singleLine = true,
-                readOnly = true,
-                enabled = false,
-                modifier = Modifier.fillMaxWidth()
-                    .clickable {
-                        Log.d("MainScreen", "点击了搜索框")
-                        onSearchClick()
-                    },
-            )
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 24.sp,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.Black
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 100.dp)
+            ) {
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = {},
+                    placeholder = { Text("输入目的地") },
+                    singleLine = true,
+                    readOnly = true,
+                    enabled = false,
+                    shape = MaterialTheme.shapes.small.copy(
+                        topStart = CornerSize(30.dp),
+                        topEnd = CornerSize(30.dp),
+                        bottomStart = CornerSize(30.dp),
+                        bottomEnd = CornerSize(30.dp)
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Black,
+                        unfocusedBorderColor = Color.Black
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp)
+                        .clickable {
+                            Log.d("MainScreen", "点击了搜索框")
+                            onSearchClick()
+                        },
+                )
+            }
         }
     }
 }
