@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
@@ -24,10 +26,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -189,29 +195,50 @@ fun OriginDestinationInputSection(originDestination: OriginDestination) {
         OutlinedTextField(
             value = originDestination.originText,
             onValueChange = { /* 不处理输入 */ },
-            label = { Text("出发地") },
             readOnly = true, // 只读
-            modifier = Modifier.fillMaxWidth()
-            // TODO: 添加 clickable 等修饰符，如果需要编辑起终点
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.small.copy(
+                topStart = CornerSize(16.dp),
+                topEnd = CornerSize(16.dp),
+                bottomStart = CornerSize(16.dp),
+                bottomEnd = CornerSize(16.dp)
+            ),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.Black,
+                unfocusedBorderColor = Color.Black
+            )
         )
+        //高度60dp
         OutlinedTextField(
             value = originDestination.destinationText,
             onValueChange = { /* 不处理输入 */ },
-            label = { Text("目的地") },
             readOnly = true, // 只读
-            modifier = Modifier.fillMaxWidth()
-            // TODO: 添加 clickable 等修饰符
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.small.copy(
+                topStart = CornerSize(16.dp),
+                topEnd = CornerSize(16.dp),
+                bottomStart = CornerSize(16.dp),
+                bottomEnd = CornerSize(16.dp)
+            ),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.Black,
+                unfocusedBorderColor = Color.Black
+            )
         )
+
         Button(
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0000EB)),
             onClick = {
                 // TODO: 实现调换起终点逻辑
             },
-            modifier = Modifier.align(Alignment.CenterHorizontally) // 水平居中
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
         ) {
             Text("调换起终点")
         }
     }
 }
+
 
 // --- TransportModeTabs (保持不变，onTabSelected 逻辑在 RoutePlanScreen 中实现) ---
 @Composable
