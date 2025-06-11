@@ -1,11 +1,15 @@
 package world.accera.dawn
 
 import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,11 +17,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,10 +31,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +42,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import world.accera.dawn.data.OriginDestination
 import world.accera.dawn.data.RouteOptionSummary
+import world.accera.dawn.ui.components.TicketContainer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -125,97 +130,116 @@ fun RoutePlanScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("出行方案") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回"
-                        )
-                    }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFEFF1F5))
+    ) {
+        // 顶部栏
+        CenterAlignedTopAppBar(
+            title = { Text("出行方案") },
+            navigationIcon = {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "返回"
+                    )
                 }
+            },
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor = Color(0xFFEFF1F5) // 这里设置为你想要的背景色
             )
-        }
-    ) { paddingValues ->
+        )
+
+        // 内容区域
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues) // 应用 Scaffold 的 padding
-                .padding(horizontal = 16.dp) // 页面内容左右内边距
+                .padding(top = 8.dp) // 你可以根据需要调整顶部 padding
         ) {
-            // 起终点信息区域 (从传入参数构建 OriginDestination，用于UI展示)
-            // TODO: 可以根据需要美化 OriginDestination 的文本显示，例如逆地理编码（可能在 ViewModel 中处理）
+            // 起终点信息区域
             val originDestination = OriginDestination(
-                originText = "($originLat, $originLon)", // 暂时显示经纬度，后续可逆地理编码
+                originText = "($originLat, $originLon)",
                 destinationText = destName
             )
             OriginDestinationInputSection(
                 originName = originName,
                 destinationName = internalDestName,
-                onSwapClick = swapOriginDestination // 传入交换回调
+                onSwapClick = swapOriginDestination
             )
 
-            Spacer(modifier = Modifier.height(12.dp)) // 间距
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // 交通方式标签栏
-            TransportModeTabs(
-                transportModes = transportModes,
-                selectedTabIndex = selectedTabIndex,
-                onTabSelected = { index ->
-                    selectedTabIndex = index // 更新 UI 选中的标签状态
-                    // *** 点击标签时，触发 ViewModel 规划新的交通方式 ***
-                    // 调用 ViewModel 的 planRoute 方法，传递起终点和新的选中模式
-                    Log.d("RoutePlanScreen", "Tab clicked: ${transportModes[index]}, Triggering planning")
-                    routePlanViewModel.planRoute(originLat, originLon, destLat, destLon, destName, index)
-                }
-            )
+            val shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .shadow(8.dp, shape, clip = false)
+                    .clip(shape)
+                    .background(Color(0xFFEEF0FB))
+                    .padding(20.dp)
+            ) {
+                // 交通方式标签栏
+                TransportModeTabs(
+                    transportModes = transportModes,
+                    selectedTabIndex = selectedTabIndex,
+                    onTabSelected = { index ->
+                        selectedTabIndex = index
+                        Log.d(
+                            "RoutePlanScreen",
+                            "Tab clicked: ${transportModes[index]}, Triggering planning"
+                        )
+                        routePlanViewModel.planRoute(
+                            originLat,
+                            originLon,
+                            destLat,
+                            destLon,
+                            destName,
+                            index
+                        )
+                    }
+                )
 
-            Spacer(modifier = Modifier.height(12.dp)) // 间距
+                Spacer(modifier = Modifier.height(12.dp))
 
-            // 显示当前选中交通方式的路径方案列表 或 加载/错误提示
-            Box(modifier = Modifier.fillMaxSize()) { // 使用 Box 来居中加载指示器和错误信息
-
-                if (isLoading) {
-                    // 显示加载指示器
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                } else if (errorMessage != null) {
-                    // 显示错误信息
-                    Text(
-                        text = "错误: $errorMessage",
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.align(Alignment.Center).padding(horizontal = 16.dp)
-                    )
-                } else {
-                    // 显示当前选中交通方式的路径方案列表
-                    // 从 ViewModel 的 allRouteDataState 中获取当前选中模式的数据
-                    val currentRoutes = allRouteData[selectedTabIndex] ?: emptyList()
-                    if (currentRoutes.isEmpty()) {
-                        // 如果当前交通方式没有方案，显示提示
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            // 根据 selectedTabIndex 显示更具体的文本或通用文本
-                            Text(
-                                text = if (selectedTabIndex == 0) "未找到步行方案" else "未找到相关方案",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (isLoading) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    } else if (errorMessage != null) {
+                        Text(
+                            text = "错误: $errorMessage",
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .padding(horizontal = 16.dp)
+                        )
                     } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp) // 卡片间垂直间距
-                        ) {
-                            items(currentRoutes, key = { it.id }) { routeSummary -> // 使用方案ID作为key
-                                // 传递从 ViewModel 获取的 RouteOptionSummary 数据
-                                RouteOptionCard(
-                                    routeSummary = routeSummary,
-                                    onNavigateStart = onNavigateStart
+                        val currentRoutes = allRouteData[selectedTabIndex] ?: emptyList()
+                        if (currentRoutes.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (selectedTabIndex == 0) "未找到步行方案" else "未找到相关方案",
+                                    style = MaterialTheme.typography.bodyMedium
                                 )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(
+                                    currentRoutes,
+                                    key = { it.id }
+                                ) { routeSummary ->
+                                    RouteOptionCard(
+                                        routeSummary = routeSummary,
+                                        onNavigateStart = onNavigateStart
+                                    )
+                                }
                             }
                         }
                     }
@@ -241,7 +265,9 @@ fun OriginDestinationInputSection(
             onValueChange = { /* 不处理输入 */ },
             readOnly = true,
             maxLines = 1,
-            modifier = Modifier.fillMaxWidth().height(60.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp),
             shape = MaterialTheme.shapes.small.copy(
                 topStart = CornerSize(30.dp),
                 topEnd = CornerSize(30.dp),
@@ -260,7 +286,9 @@ fun OriginDestinationInputSection(
             onValueChange = { /* 不处理输入 */ },
             readOnly = true,
             maxLines = 1,
-            modifier = Modifier.fillMaxWidth().height(60.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp),
             shape = MaterialTheme.shapes.small.copy(
                 topStart = CornerSize(30.dp),
                 topEnd = CornerSize(30.dp),
@@ -276,7 +304,9 @@ fun OriginDestinationInputSection(
         Button(
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0000EB)),
             onClick = onSwapClick,
-            modifier = Modifier.fillMaxWidth().height(60.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp),
         ) {
             Text("调换起终点")
         }
@@ -289,18 +319,48 @@ fun OriginDestinationInputSection(
 fun TransportModeTabs(
     transportModes: List<String>,
     selectedTabIndex: Int,
-    onTabSelected: (Int) -> Unit // 这个回调由 RoutePlanScreen 实现并传递进来
+    onTabSelected: (Int) -> Unit
 ) {
-    TabRow(
-        selectedTabIndex = selectedTabIndex,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        transportModes.forEachIndexed { index, mode ->
-            Tab(
-                selected = selectedTabIndex == index,
-                onClick = { onTabSelected(index) }, // 调用外部传入的回调
-                text = { Text(mode) }
+    // 圆角半径，pill形状
+    val cornerRadius = 24.dp
+
+    // 外层包裹，设置黑色边框和圆角
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .border(
+                width = 1.dp,
+                color = Color.Black,
+                shape = RoundedCornerShape(cornerRadius)
             )
+            .clip(RoundedCornerShape(cornerRadius))
+            .background(Color.White) // 背景色可根据需要调整
+            .padding(4.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            transportModes.forEachIndexed { index, mode ->
+                val isSelected = selectedTabIndex == index
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(cornerRadius))
+                        .background(if (isSelected) Color(0xFFFFB1EE) else Color.Transparent)
+                        .clickable { onTabSelected(index) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = mode,
+                        color = Color.Black,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1
+                    )
+                }
+            }
         }
     }
 }
@@ -312,11 +372,10 @@ fun RouteOptionCard(
     // TODO: 接收点击按钮的回调
     onNavigateStart: () -> Unit
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    TicketContainer(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp) // 卡片内边距
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -343,7 +402,11 @@ fun RouteOptionCard(
                     onClick = {
                         onNavigateStart()
                     },
-                    modifier = Modifier.align(Alignment.CenterVertically) // 垂直居中对齐
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF0000EB),
+                        contentColor = Color.White
+                    )
                 ) {
                     Text(routeSummary.buttonText) // 按钮文本来自数据
                 }

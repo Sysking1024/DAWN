@@ -134,6 +134,7 @@ fun CameraRecognitionScreen(
                             val result = DoubaoMamager.recognition(bitmap, inputText)
                             recognitionResult = result
                             currentView.announceForAccessibility(result)
+                            Log.i(TAG, "识别结果: $result")
 
                             // 计算Tokens，如果超过限制，则重置session
                             /*tokensSize += IMAGE_TOKEN + (GemmaManager.sizeInTokens(inputText + result) ?: 0)
@@ -152,7 +153,7 @@ fun CameraRecognitionScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 48.dp) // 增加了底部的内边距
-                .size(80.dp),
+                .size(100.dp),
             shape = CircleShape,
             colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.7f))
         ) {

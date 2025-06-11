@@ -79,6 +79,23 @@ class RoutePlanViewModel(application: Application) : AndroidViewModel(applicatio
 
     private var lastCalculatedModeIndex: Int = -1 // 记录最后一次尝试规划的模式
 
+    //导航控制相关状态 ---
+    private val _showSettingsDialog = MutableStateFlow(false)
+    val showSettingsDialog: StateFlow<Boolean> = _showSettingsDialog.asStateFlow()
+
+    private val _requestOverview = MutableStateFlow(false)
+    val requestOverview: StateFlow<Boolean> = _requestOverview.asStateFlow()
+
+    private val _remainingTime = MutableStateFlow<String?>(null)
+    val remainingTime: StateFlow<String?> = _remainingTime.asStateFlow()
+
+    private val _remainingDistance = MutableStateFlow<String?>(null)
+    val remainingDistance: StateFlow<String?> = _remainingDistance.asStateFlow()
+
+    private val _arrivalTime = MutableStateFlow<String?>(null)
+    val arrivalTime: StateFlow<String?> = _arrivalTime.asStateFlow()
+
+
     // --- 初始化 ---
     init {
         Log.d(TAG, "RoutePlanViewModel init")
@@ -401,6 +418,34 @@ class RoutePlanViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    // 退出导航
+    fun exitNavigation() {
+        // 停止导航引擎
+        aMapNavi?.stopNavi()
+        // 可选: 通知 UI 关闭导航界面
+        // 这里建议通过事件回调到 Composable
+    }
+
+    // 打开设置
+    fun openSettings() {
+        _showSettingsDialog.value = true
+    }
+
+    // 关闭设置
+    fun closeSettings() {
+        _showSettingsDialog.value = false
+    }
+
+    // 请求全览
+    fun requestOverview() {
+        _requestOverview.value = true
+    }
+
+    // 全览完成后重置
+    fun onOverviewHandled() {
+        _requestOverview.value = false
+    }
+
     @Deprecated("Deprecated in Java", ReplaceWith("TODO(\"Not yet implemented\")"))
     override fun notifyParallelRoad(p0: Int) {
         TODO("Not yet implemented")
@@ -480,7 +525,12 @@ class RoutePlanViewModel(application: Application) : AndroidViewModel(applicatio
 
     override fun onGpsOpenStatus(p0: Boolean) { Log.d(TAG, "onGpsOpenStatus: $p0") }
     override fun onNaviInfoUpdate(p0: NaviInfo?) {
-        TODO("Not yet implemented")
+        p0?.let { info ->
+            _remainingTime.value = formatDuration(info.pathRetainTime)
+            _remainingDistance.value = formatDistance(info.pathRetainDistance)
+            val arrivalTimeText = calculateArrivalTime(info.pathRetainTime)
+            _arrivalTime.value = arrivalTimeText
+        }
     }
 
     override fun updateCameraInfo(p0: Array<out AMapNaviCameraInfo>?) {
