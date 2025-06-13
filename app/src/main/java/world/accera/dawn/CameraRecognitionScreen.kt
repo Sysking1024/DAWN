@@ -45,7 +45,7 @@ import androidx.core.graphics.scale
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
-import world.accera.dawn.mllms.DoubaoMamager
+import world.accera.dawn.mllms.GemmaManager
 import java.util.concurrent.Executor
 
 private const val TAG = "CameraRecognitionScreen"
@@ -129,20 +129,11 @@ fun CameraRecognitionScreen(
                         scope.launch {
                             //val inputText = if (tokensSize == 0) prompt else NEXT_PROMPT
                             val inputText = "这张照片有${destinationName}吗？"
-                            //val result = GemmaManager.recognition(bitmap, inputText)
-                            //val result = GeminiManager.recognition(bitmap, inputText)
-                            val result = DoubaoMamager.recognition(bitmap, inputText)
+                            val result = GemmaManager.recognition(bitmap, inputText)
                             recognitionResult = result
                             currentView.announceForAccessibility(result)
                             Log.i(TAG, "识别结果: $result")
 
-                            // 计算Tokens，如果超过限制，则重置session
-                            /*tokensSize += IMAGE_TOKEN + (GemmaManager.sizeInTokens(inputText + result) ?: 0)
-                            if (tokensSize >= 3500 || result.isNullOrBlank()) {
-                                GemmaManager.newSession()
-                                tokensSize = 0
-                            }
-                            currentView.announceForAccessibility("token = $tokensSize")*/
                         }
                     },
                     onError = { exception ->

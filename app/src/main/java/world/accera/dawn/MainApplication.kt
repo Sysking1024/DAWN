@@ -5,9 +5,6 @@ import com.amap.api.services.core.ServiceSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import world.accera.dawn.mcp_functions.MCPAMap
-import world.accera.dawn.mllms.DoubaoMamager
-import world.accera.dawn.mllms.GeminiManager
 import world.accera.dawn.mllms.GemmaManager
 
 class MainApplication : Application() {
@@ -47,12 +44,6 @@ class MainApplication : Application() {
 
         // 在 Application 创建时启动模型的异步初始化
         GemmaManager.initializeAsync(this, applicationScope)
-
-        // 初始化Gemini和MCP
-        //GeminiManager.initialize(systemInstruction = systemInstruction)
-        DoubaoMamager.initialize(systemInstruction)
-        MCPAMap.initialize(applicationScope)
-
         ServiceSettings.updatePrivacyShow(this, true, true)
         ServiceSettings.updatePrivacyAgree(this, true)
     }
@@ -60,7 +51,7 @@ class MainApplication : Application() {
     override fun onTerminate() {
         super.onTerminate()
 
-        //GemmaManager.release()
-        MCPAMap.destroy(applicationScope)
+        GemmaManager.release()
+
     }
 }
